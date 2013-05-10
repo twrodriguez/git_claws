@@ -1,0 +1,15 @@
+#!/bin/bash -e
+
+if [[ "$SHELL" =~ bash ]]; then
+  files="env_vars.sh post-commit post-merge pre-commit"
+  git_root=$1
+
+  if test -d "$git_root"; then
+    test -d "$git_root/.git/hooks" && cp -a $files $git_root
+    echo "Git Claws installed"
+  else
+    echo 'Usage: ./install_git_claws "/your/project/path"'
+  fi
+else
+  echo "ERROR: Please run using bash, not $SHELL"
+fi
