@@ -13,7 +13,7 @@ That's it.
 Supported Platforms
 -------------------
 
-Just about any Unix-based OS that uses bash.
+Just about any Unix-based OS that uses bash. If using Linux, the command "lsb_release" is used to interrogate the platform.
 
 Contributing to git_claws
 -------------------------

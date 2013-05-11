@@ -41,7 +41,7 @@ lod_exit() {
 # Platform-specific features
 #
 git_root=`git rev-parse --show-toplevel`
-source "$git_root/git_hooks/env_vars.sh"
+source "$git_root/.git/hooks/env_vars.sh"
 
 if [[ "$my_platform" == "linux" ]]; then
   whitespace_modification="true"
