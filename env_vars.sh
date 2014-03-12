@@ -14,6 +14,10 @@ elif [[ "$uname_output" =~ "BSD" || "$uname_output" =~ "DragonFly" ]]; then
   my_platform="bsd"
 elif [[ "$uname_output" =~ "Haiku" ]]; then
   my_platform="beos"
+elif [[ "$uname_output" =~ "MINGW" || "$uname_output" =~ "mingw" || "$uname_output" =~ "MinGW" ]]; then
+  my_platform="mingw"
+elif [[ "$uname_output" =~ "CYGWIN" || "$uname_output" =~ "cygwin" ]]; then
+  my_platform="cygwin"
 else
   echo "ERROR: Unknown Platform '$uname_output'"
   exit 1
@@ -214,10 +218,10 @@ elif [[ "$my_platform" == "darwin" ]]; then
   my_distro="Mac OSX"
   my_install=""
 
-  if [[ -z `which brew 2> /dev/null` ]]; then # Homebrew
+  if [[ -n `which brew 2> /dev/null` ]]; then # Homebrew
     my_method="install"
     my_install="brew install"
-  elif [[ -z `which port 2> /dev/null` ]]; then # MacPorts
+  elif [[ -n `which port 2> /dev/null` ]]; then # MacPorts
     my_method="install"
     my_install="port install"
   else
@@ -234,6 +238,7 @@ elif [[ "$my_platform" == "darwin" ]]; then
     "10.6") my_nickname="Snow Leopard";;
     "10.7") my_nickname="Lion";;
     "10.8") my_nickname="Mountain Lion";;
+    "10.9") my_nickname="Mavericks";;
     *)
       echo "Unknown Version of OSX Detected: $my_major_release"
       my_nickname="Unknown"
@@ -283,5 +288,43 @@ elif [[ "$my_platform" == "beos" ]]; then
   my_pkg_fmt=""
   my_local_install=""
   my_install=""
+
+elif [[ "$my_platform" == "mingw" || "$my_platform" == "cygwin" ]]; then
+
+  my_distro="Windows"
+  my_install=""
+
+  if [[ "$my_platform" == "mingw" ]]; then # MinGW
+#   NOTE - You can use install if you want, but you need to know to use
+#          either the mingw- or msys- prefix. And this is still only
+#          really useful for packages you KNOW they have. You're better
+#          off just building everything.
+#    my_method="install"
+#    my_install="mingw-get.exe install"
+    my_method="build"
+    my_install=""
+  elif [[ "$my_platform" == "cygwin" ]]; then # Cygwin
+    my_method="install"
+    my_install="setup.exe -q -D -P"
+  else
+    my_method="build"
+  fi
+  my_major_release=`uname -s | grep -o "NT-[0-9]\+\.[0-9]\+" | head -1`
+  case "$my_major_release" in
+    "NT-5.1") my_distro="Windows XP";;
+    "NT-6.0") my_distro="Windows Vista";;
+    "NT-6.1") my_distro="Windows 7";;
+    "NT-6.2") my_distro="Windows 8";;
+    "NT-6.3") my_distro="Windows 8.1";;
+    *)
+      echo "Unknown Version of Windows Detected: $my_major_release"
+      my_distro="Unknown"
+      ;;
+  esac
+
+  my_nickname=`reg query "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion" | grep ProductName | awk '{ print $3 " " $4 " " $5 " " $6 " " $7 " " $8 " " $9 }'`
+
+  my_pkg_fmt=""
+  my_local_install=""
 
 fi

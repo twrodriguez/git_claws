@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 git_root=`git rev-parse --show-toplevel`
-source "$git_root/git_hooks/env_vars.sh"
+source "$git_root/.git/hooks/env_vars.sh"
 if [[ -e "$git_root/Gemfile" ]]; then
   echo "Bundling gems..."
   bundle install --system

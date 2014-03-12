@@ -45,13 +45,16 @@ source "$git_root/.git/hooks/env_vars.sh"
 
 if [[ "$my_platform" == "linux" ]]; then
   whitespace_modification="true"
+  email_hostname_verify="true"
   stat_flag=-c
 elif [[ "$my_platform" == "darwin" ]]; then
   whitespace_modification="true"
+  email_hostname_verify="true"
   stat_flag=-f
 else
   echo "Non-linux, non-darwin platform detected ($my_platform) so whitespace modification logic suppressed..."
   whitespace_modification=""
+  email_hostname_verify=""
   stat_flag=-f
 fi
 
@@ -70,6 +73,7 @@ fi
 #
 
 whitespace=""
+todos=""
 echo "Checking for syntax errors..."
 commited_files=`git diff-index --name-only HEAD -- 2>&1`
 exit_status=$?
@@ -86,7 +90,9 @@ for FILE in $commited_files; do
           # Remove trailing whitespace
           sed -i "s/\\s\\s*$//g" $FILE
           # Remove tabs
-          sed -i "s/\t/  /g" $FILE
+          if [[ ! "$filetype" =~ "makefile" ]]; then
+            sed -i "s/\t/  /g" $FILE
+          fi
           # Remove empty line at EOF
           sed -i '${/^ *$/d;}' $FILE
         elif [[ "$my_platform" == "darwin" ]]; then
@@ -96,6 +102,10 @@ for FILE in $commited_files; do
         fi
       fi
     fi
+
+    # Capture important-looking TODOs
+    temp_todos=`grep -n -C3 "TODO" $FILE | grep -C3 "XXX\|FIXME"`
+    [[ -n "$temp_todos" ]] && todos="$todos\n\n$temp_todos"
 
     # If a file is a bash script, check for syntax errors using bash
     if [[ "$FILE" =~ .*\.sh$ || "$filetype" =~ "shell script" ]]; then
@@ -280,15 +290,36 @@ if [[ "$REQUIRED_FILES" =~ "Gemfile" ]]; then
 fi
 
 #
+# Check that if any .min.js files exist in the project, that their modification time is later than their .js original
+#
+# TODO
+
+#
 # Check that username and user emails are filled properly
 #
 username=`git config --get user.name`
 useremail=`git config --get user.email`
 emaildomain=`echo $useremail | grep -o "[^@]*$"`
+
+if [[ -n "$email_hostname_verify" ]]; then
+  ip_list=`ifconfig | grep -o "inet \(addr:\)\?[0-9\.]*" | grep -o "[0-9\.]*$" | grep -v "127.0.0.1"`
+fi
+
 if [[ "$username" == "" ]]; then
   lod_exit "Please set your git user.name by running 'git config user.name <your github username>'"
-elif [[ "$useremail" == "" ]] || ! host "$emaildomain" &> /dev/null; then
+elif [[ "$useremail" == "" ]]; then
   lod_exit "Please set your git user.email by running 'git config user.email <your github email>'"
+elif [[ -n "$email_hostname_verify" ]] && [[ -n "$ip_list" ]] && ! host "$emaildomain" &> /dev/null; then
+  lod_exit "'$emaildomain' is not a valid hostname. Please set your git user.email by running 'git config user.email <your github email>'"
 fi
+
+#
+# Ask user to review "TO-DO"s that also are marked with triple X or "FIX-ME"
+# TODO
+#if [[ -n "$todos" ]]; then
+#  echo -n "Do you accept these important-looking TODOs? [y/n]: "
+#  read -a acceptance kbd
+#  [[ "$acceptance" == "y" ]] || lod_exit "Please fix some of those TODOs."
+#fi
 
 exit 0
