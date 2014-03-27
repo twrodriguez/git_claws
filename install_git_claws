@@ -1,12 +1,30 @@
 #!/bin/bash -e
 
 if [[ "$SHELL" =~ bash ]]; then
+  DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
   files="env_vars.sh post-commit post-merge pre-commit"
+  opt_files=".gitattributes .gitignore"
 
   if [[ -n $@ ]]; then
     for git_root in $@; do
       if test -d "$git_root/.git/hooks"; then
-        cp -a $files "$git_root/.git/hooks/"
+        for FILE in $files; do
+          cp -a "$DIR/$FILE" "$git_root/.git/hooks/"
+        done
+
+        for FILE in $opt_files; do
+          if ! test -e "$git_root/$FILE"; then
+            echo "Install $FILE? [y/n]"
+            read install_opt_file
+            if [[ "$install_opt_file" == "y" ]]; then
+              cp -a "$DIR/$FILE" "$git_root/"
+              echo "Added $FILE"
+            else
+              echo "Skipped $FILE"
+            fi
+          fi
+        done
+
         echo "Git Claws installed for $git_root"
       else
         echo "No git repo found at $git_root, skipping."
