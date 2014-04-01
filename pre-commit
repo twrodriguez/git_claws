@@ -295,6 +295,51 @@ fi
 # TODO
 
 #
+# If there are any tests available, ensure that they run
+#
+test_pass=0
+if [[ -e "$git_root/Gruntfile.js" || -e "$git_root/Gruntfile.coffee" ]]; then
+  if [[ -n `which grunt 2> /dev/null` ]]; then
+    echo "Running Grunt tests..."
+    cd "$git_root"
+    grunt test; test_pass=$?
+    cd -
+  else
+    echo "Gruntfile found but 'grunt' command isn't available"
+  fi
+elif [[ -e "$git_root/Rakefile" ]]; then
+  if [[ -n `which rake 2> /dev/null` ]]; then
+    echo "Running RSpec tests..."
+    cd "$git_root"
+    rake spec; test_pass=$?
+    cd -
+  else
+    echo "Rakefile found but 'rake' command isn't available"
+  fi
+elif [[ -e "$git_root/setup.py" ]]; then
+  if [[ -n `which python 2> /dev/null` ]]; then
+    echo "Running Python tests..."
+    cd "$git_root"
+    python setup.py test; test_pass=$?
+    cd -
+  else
+    echo "setup.py found but 'python' isn't available"
+  fi
+elif [[ -e "$git_root/package.json" ]]; then
+  if [[ -n `which npm 2> /dev/null` ]]; then
+    echo "Running Node tests..."
+    cd "$git_root"
+    npm test; test_pass=$?
+    cd -
+  else
+    echo "package.json found but 'npm' isn't available"
+  fi
+fi
+if [[ "$test_pass" -ne 0 ]]; then
+  lod_exit "Tests failed, please ensure tests pass before committing."
+fi
+
+#
 # Check that username and user emails are filled properly
 #
 username=`git config --get user.name`
