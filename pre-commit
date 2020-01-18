@@ -87,18 +87,38 @@ for FILE in $commited_files; do
       if [[ "$filetype" =~ "text" ]]; then
         if [[ "$my_platform" == "linux" ]]; then
           if [[ -n `grep "\\s\\s*$" $FILE` ]]; then whitespace="$whitespace $FILE"; fi
+
           # Remove trailing whitespace
           sed -i "s/\\s\\s*$//g" $FILE
+
           # Remove tabs
           if [[ ! "$filetype" =~ "makefile" ]]; then
-            sed -i "s/\t/  /g" $FILE
+            if [[ "${FILE##*.}" == "py" ]]; then
+              sed -i "s/\t/    /g" $FILE
+            else
+              sed -i "s/\t/  /g" $FILE
+            fi
           fi
+
           # Remove empty line at EOF
           sed -i '${/^ *$/d;}' $FILE
         elif [[ "$my_platform" == "darwin" ]]; then
           if [[ -n `egrep '[[:space:]]+$' $FILE` ]]; then whitespace="$whitespace $FILE"; fi
+
           # Remove trailing whitespace
           sed -i '' -E 's/[[:space:]]+$//g' $FILE
+
+          # Remove tabs
+          if [[ ! "$filetype" =~ "makefile" ]]; then
+            if [[ "${FILE##*.}" == "py" ]]; then
+              sed -i '' -E $'s/\t/    /g' $FILE
+            else
+              sed -i '' -E $'s/\t/  /g' $FILE
+            fi
+          fi
+
+          # Remove empty line at EOF
+          sed -i '' -E '${/^ *$/d;}' $FILE
         fi
       fi
     fi
